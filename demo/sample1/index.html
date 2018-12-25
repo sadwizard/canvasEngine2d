@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sample1</title>
+</head>
+<body>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+  <canvas id="canvas"></canvas>
+  <script src="../../bundle.js"></script>
+  <script>
+    var canvas = new CanvasEngine(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
+    var vars = canvas.vars;
+    var Vec = canvas.Vec;
+    var engine = canvas.Engine;
+    var draw = canvas.Engine.draw;
+    var u = canvas.utils;
+    // var ke = canvas.keyboardEvents.setup();
+
+    var moonImage = new Image();
+    moonImage.src = './moon.png';
+
+    function Planet() {
+      this.position = new Vec(vars.wh, vars.hh);
+      this.weight = 10;
+      this.speed = new Vec(1, 1);
+      this.deg = 0;
+      this.point = new Vec(100, 100);
+    }
+
+    Planet.prototype.draw = function() {
+      draw(this.position.x, this.position.y, this.deg, function(ctx) {
+        ctx.drawImage(moonImage, -50, -50, 100, 100);
+      });
+    }
+      
+    Planet.prototype.update = function() {
+      var mag = Math.round(this.position.relativeMagnitude(this.point));
+
+      if (mag > 5) {
+        this.deg = u.radToDeg(this.position.relativeAngle(this.point));
+        this.position.add(this.speed.setAngle(this.deg));
+      }
+
+      if (mag < 1000 || mag > 1) {
+        this.speed.add(new Vec(0.001, 0.001));
+      } else {
+        this.speed.set(new Vec(0, 0));
+      }
+    }
+
+    var moon = new Planet();
+    var mx=0,my=0;
+    window.addEventListener('mousemove', function(e) {
+      mx = e.clientX;
+      my = e.clientY;
+    })
+
+    engine.update(function(ctx) {
+      moon.draw();
+      moon.update();
+
+      moon.point = new Vec(mx, my);
+    });
+
+    engine.start();
+  </script>
+</body>
+</html>
