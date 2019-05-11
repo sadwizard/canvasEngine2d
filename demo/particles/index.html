@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sample1</title>
+</head>
+<body>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+  <canvas id="canvas"></canvas>
+  <script src="../../bundle.js"></script>
+  <script>
+    var canvas = new CanvasEngine(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
+    var vars = canvas.vars;
+    var Vec = canvas.Vec;
+    var engine = canvas.Engine;
+    var draw = canvas.Engine.draw;
+    var u = canvas.utils;
+
+
+    function Pixel(position) {
+      this.position = position;
+      this.weight = 10;
+      this.speed = new Vec(5, 5);
+      this.angle = u.random(-160, 45);
+      this.gravity = 0.1;
+      this.live = u.random(50, 300);
+      this.bg = 'rgba('+ u.random(0, 225) +',0 , '+ u.random(0, 225) +', 0.5)';
+    }
+
+    Pixel.prototype.update = function() {
+      this.live -= 1;
+      this.position.add(this.speed.setAngle(this.angle));
+      this.speed.sub(new Vec(0.1, 0.1).setAngle(90))
+    }
+
+    Pixel.prototype.draw = function() {
+      var self = this;
+      draw(this.position.x, this.position.y, 0, function(ctx) {
+        ctx.fillStyle = self.bg;
+        // ctx.fillRect(-10, -10, 20, 20);
+        ctx.beginPath();
+        ctx.arc(-5, -5, 10, 0, Math.PI * 2, true);
+        ctx.fill();
+      });
+    }
+
+    function Emitter(len) {
+      this.position = new Vec(vars.wh, vars.hh);
+      this.particles = [];
+      this.len = len;
+
+      for(var i = 0; i < this.len; i++) {
+        this.particles.push(new Pixel(new Vec(vars.wh, vars.hh)));
+      }
+    }
+
+    Emitter.prototype.update = function() {
+      var self = this;
+      this.particles.map(function(particle, i) {
+        particle.update();
+
+        if (particle.live === 0) {
+          delete self.particles[i];
+          self.particles.push(new Pixel(new Vec(vars.wh, vars.hh)));
+        }
+      });
+    }
+
+    Emitter.prototype.draw = function() {
+      this.particles.map(function(particle) {
+        particle.draw();
+      });
+    }
+
+    var solute = new Emitter(50);
+
+    engine.update(function(ctx) {
+      solute.update();
+      solute.draw();
+    });
+
+    engine.start();
+  </script>
+</body>
+</html>
