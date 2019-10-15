@@ -2,26 +2,33 @@ import requestAnimationFramePolifil from '../vendor/rafPolifil.js';
 
 export default function Engine(ctx, clearSize) {
   this.id = null;
+  this.FPS = 1000 / 60;
   this.updateFunc = null;
   var self = this;
   this.ctx = ctx;
+  this.time = null;
 
   function tick() {
-    ctx.clearRect(0, 0, clearSize.w, clearSize.h);
 
-    if (self.updateFunc) {
-      self.updateFunc(ctx);
+    var now = Date.now();
+    if (self.updateFunc && now - self.time >= self.FPS) {
+      ctx.clearRect(0, 0, clearSize.w, clearSize.h);
+
+      self.updateFunc(ctx, now);
+      self.time = now;
     }
 
     self.id = requestAnimationFrame(tick);
   }
 
   this.start = function() {
+    this.time = Date.now();
     this.id = requestAnimationFrame(tick);
   }
 
   this.stop = function() {
     cancelAnimationFrame(this.id);
+    this.time = null;
     this.id = null;
   }
 

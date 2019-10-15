@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sample1</title>
+</head>
+<body>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+  <canvas id="canvas"></canvas>
+  <script src="../../bundle.js"></script>
+  <script>
+    var canvas = new CanvasEngine(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
+    var vars = canvas.vars;
+    var Vec = canvas.Vec;
+    var engine = canvas.Engine;
+    var draw = canvas.Engine.draw;
+    var u = canvas.utils;
+
+
+    function Ball(position) {
+      this.position = position;
+      this.weight = 15;
+      this.speed = Vec.fromNumber(4);
+      this.angle = 90;
+      this.gravity = 0.1;
+      this.bg = 'rgba('+ u.random(0, 225) +',0 , '+ u.random(0, 225) +', 1)';
+    }
+
+    Ball.prototype.update = function() {
+        this.position.add(this.speed.setAngle(this.angle));
+        this.speed.add(new Vec(0.1, 0.1).setAngle(90));
+
+      // var r = vars.h - this.position.y;
+      // var w = (this.weight / r) * 6.67;
+      //   this.speed.add(Vec.fromNumber(w));
+
+      if (this.position.y >= vars.h - 10) {
+        this.speed.sub(Vec.fromNumber(1));
+        this.speed.multiply(new Vec(-1, -1));
+      }
+    }
+
+    Ball.prototype.draw = function() {
+      var self = this;
+      draw(this.position.x, this.position.y, 0, function(ctx) {
+        ctx.fillStyle = self.bg;
+        // ctx.fillRect(-10, -10, 20, 20);
+        ctx.beginPath();
+        ctx.arc(-5, -5, 10, 0, Math.PI * 2, true);
+        ctx.fill();
+      });
+    }
+
+
+    var ball1 = new Ball(new Vec(vars.wh, 100));
+
+    engine.update(function(ctx) {
+      ball1.update();
+      ball1.draw();
+    });
+
+    engine.start();
+  </script>
+</body>
+</html>

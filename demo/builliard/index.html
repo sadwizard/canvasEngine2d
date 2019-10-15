@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sample1</title>
+</head>
+<body>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #start {
+      position: absolute;
+      left: 4px;
+      top: 4px;
+    }
+  </style>
+  <button id="start" data-active="">start</button>
+  <canvas id="canvas"></canvas>
+  <script src="../../bundle.js"></script>
+  <script>
+    var canvas = new CanvasEngine(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#000');
+    var vars = canvas.vars;
+    var Vec = canvas.Vec;
+    var engine = canvas.Engine;
+    var draw = canvas.Engine.draw;
+    var u = canvas.utils;
+    var G = 6.67;
+    var dt = 0.03;
+
+    var isMouseDown = false;
+    var clientPos = { x: 0, y: 0 };
+
+    // canvas.ctx.globalAlpha = 1;
+    // canvas.ctx.globalCompositeOperation = 'lighter';
+    // canvas.ctx.shadowBlur = 1;
+    // canvas.ctx.shadowColor = '#fff';
+
+    function Ball(position, vel, color, area) {
+      this.id = String(u.random(100, 900));
+      this.position = position;
+      this.m = 10;
+      this.speed = vel || new Vec(0,0);
+      this.size = 14;
+      this.angle = 90;
+      this.bg = color;
+      this.area = area;
+    }
+
+    Ball.prototype.update = function(bunch) {
+      this.speed.decrease(new Vec(0.05, 0.05));
+      this.position.add(this.speed);
+
+    }
+
+    Ball.prototype.colisionWithArea = function() {
+      if (
+        Math.round(this.position.y - this.size) < this.area.position.y - this.area.height / 2 ||
+        Math.round(this.position.y + this.size) >= this.area.position.y + this.area.height / 2
+      ) {
+        this.speed.negativeY();
+      }
+
+      if (
+        Math.round(this.position.x - this.size) < this.area.position.x - this.area.width / 2 ||
+        Math.round(this.position.x + this.size) >= this.area.position.x + this.area.width / 2
+      ) {
+        this.speed.negativeX();
+      }
+    }
+
+    Ball.prototype.matchColision = function(bunch) {
+      // bunch.map(function (item) {
+      // });
+
+      for (var i in bunch) {
+        if (bunch[i].id !== this.id) {
+          if (this.colision(bunch[i])) {
+            this.speed.multiply(new Vec(-1, 1));
+          }
+        }
+      }
+    }
+
+    Ball.prototype.colision = function(item) {
+      var diffX = this.position.x - item.position.x;
+      var diffY = this.position.y - item.position.y;
+      var long = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+
+      if (long < item.size * 2) {
+        return true;
+      }
+
+      return false;
+    }
+
+
+    Ball.prototype.draw = function() {
+      var self = this;
+      draw(this.position.x, this.position.y, 0, function(ctx) {
+        ctx.fillStyle = self.bg;
+        ctx.beginPath();
+        ctx.arc(0, 0, self.size, 0, Math.PI * 2, true);
+        ctx.fill();
+      });
+    }
+
+    function Area(width, height) {
+      this.position = new Vec(vars.wh, vars.hh);
+      this.width = width;
+      this.height = height;
+      this.bg = '#3d8229';
+    }
+
+    Area.prototype.draw = function() {
+      var self = this;
+      draw(this.position.x, this.position.y, 0, function(ctx) {
+        ctx.fillStyle = self.bg;
+        ctx.fillRect(-(self.width / 2), -(self.height / 2), self.width, self.height);
+      });
+
+      draw(300, this.position.y, 0, function(ctx) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#fff';
+        ctx.moveTo(0, -225);
+        ctx.lineTo(0, 225);
+        ctx.stroke();  
+      });
+
+    }
+
+    var bunch = [];
+    var area = new Area(900, 450);
+    var realSizeArea = { x: vars.wh - 450, y: vars.hh - 245, width: vars.wh + 450, height: vars.hh + 245 };
+    bunch.push(
+      new Ball(
+        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-45),'white', area
+      )
+    );
+
+    bunch.push(
+      new Ball(
+        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-10),'blue', area
+      )
+    );
+
+    bunch.push(
+      new Ball(
+        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-20),'red', area
+      )
+    );
+
+    bunch.push(
+      new Ball(
+        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(45),'yellow', area
+      )
+    );
+
+
+
+    engine.update(function(ctx) {
+      area.draw();
+      bunch.map(function(ball) {
+        ball.colisionWithArea();
+        ball.matchColision(bunch);
+        ball.update(bunch);
+        ball.draw();
+      });
+    });
+
+
+    document.getElementById('start').addEventListener('click', function(e) {
+      var isActive = e.target.getAttribute('data-active');
+
+      if (Boolean(isActive)) {
+        engine.stop();
+        e.target.setAttribute('data-active', '');
+        e.target.innerHTML = 'start';
+      } else {
+        engine.start();
+        e.target.setAttribute('data-active', true);
+        e.target.innerHTML = 'stop';
+      }
+    })
+  </script>
+</body>
+</html>

@@ -3,10 +3,22 @@ export function Vec(x, y) {
   this.y = y;
 }
 
+Vec.fromNumber = function(num) {
+  return new Vec(num, num);
+}
+
 Vec.prototype = {
   set: function(vec) {
     this.x = vec.x;
     this.y = vec.y;
+    return this;
+  },
+  setX: function(x) {
+    this.x = x;
+    return this;
+  },
+  setY: function(y) {
+    this.y = y;
     return this;
   },
   add: function(vec) {
@@ -25,6 +37,11 @@ Vec.prototype = {
     this.x *= vec.x;
     this.y *= vec.y;
 
+    return this;
+  },
+  decrease: function(vec) {
+    this.x = this.x > 0 ? this.x - vec.x : this.x + vec.x;
+    this.y = this.y > 0 ? this.y - vec.y : this.y + vec.y;
     return this;
   },
   magnitude: function() {
@@ -49,5 +66,18 @@ Vec.prototype = {
     var x = vec.x - this.x;
     var y = vec.y - this.y;
     return new Vec(x, y);
+  },
+  negativeX: function() {
+    this.x *= -1;
+    return this;
+  },
+  negativeY: function() {
+    this.y *= -1;
+    return this;
+  },
+  negative: function(vec) {
+    this.x *= -1;
+    this.y *= -1;
+    return this;
   }
 };

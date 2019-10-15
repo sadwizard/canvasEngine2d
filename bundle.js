@@ -5,10 +5,22 @@ function Vec(x, y) {
   this.y = y;
 }
 
+Vec.fromNumber = function(num) {
+  return new Vec(num, num);
+};
+
 Vec.prototype = {
   set: function(vec) {
     this.x = vec.x;
     this.y = vec.y;
+    return this;
+  },
+  setX: function(x) {
+    this.x = x;
+    return this;
+  },
+  setY: function(y) {
+    this.y = y;
     return this;
   },
   add: function(vec) {
@@ -27,6 +39,11 @@ Vec.prototype = {
     this.x *= vec.x;
     this.y *= vec.y;
 
+    return this;
+  },
+  decrease: function(vec) {
+    this.x = this.x > 0 ? this.x - vec.x : this.x + vec.x;
+    this.y = this.y > 0 ? this.y - vec.y : this.y + vec.y;
     return this;
   },
   magnitude: function() {
@@ -51,6 +68,19 @@ Vec.prototype = {
     var x = vec.x - this.x;
     var y = vec.y - this.y;
     return new Vec(x, y);
+  },
+  negativeX: function() {
+    this.x *= -1;
+    return this;
+  },
+  negativeY: function() {
+    this.y *= -1;
+    return this;
+  },
+  negative: function(vec) {
+    this.x *= -1;
+    this.y *= -1;
+    return this;
   }
 };
 
@@ -89,26 +119,33 @@ Vec.prototype = {
 
 function Engine(ctx, clearSize) {
   this.id = null;
+  this.FPS = 1000 / 60;
   this.updateFunc = null;
   var self = this;
   this.ctx = ctx;
+  this.time = null;
 
   function tick() {
-    ctx.clearRect(0, 0, clearSize.w, clearSize.h);
 
-    if (self.updateFunc) {
-      self.updateFunc(ctx);
+    var now = Date.now();
+    if (self.updateFunc && now - self.time >= self.FPS) {
+      ctx.clearRect(0, 0, clearSize.w, clearSize.h);
+
+      self.updateFunc(ctx, now);
+      self.time = now;
     }
 
     self.id = requestAnimationFrame(tick);
   }
 
   this.start = function() {
+    this.time = Date.now();
     this.id = requestAnimationFrame(tick);
   };
 
   this.stop = function() {
     cancelAnimationFrame(this.id);
+    this.time = null;
     this.id = null;
   };
 
