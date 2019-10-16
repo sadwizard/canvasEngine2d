@@ -32,6 +32,9 @@
 
     var isMouseDown = false;
     var clientPos = { x: 0, y: 0 };
+    var cueForce = 0;
+    var cueAngle = 0
+    var cueForceTimerId = null;
 
     // canvas.ctx.globalAlpha = 1;
     // canvas.ctx.globalCompositeOperation = 'lighter';
@@ -51,22 +54,31 @@
 
     Ball.prototype.update = function(bunch) {
       this.speed.decrease(new Vec(0.05, 0.05));
-      this.position.add(this.speed);
-
+      this.position.add(this.speed.setAngle(this.angle));
     }
 
     Ball.prototype.colisionWithArea = function() {
-      if (
-        Math.round(this.position.y - this.size) < this.area.position.y - this.area.height / 2 ||
-        Math.round(this.position.y + this.size) >= this.area.position.y + this.area.height / 2
-      ) {
+      if (Math.round(this.position.y - this.size) < this.area.position.y - this.area.height / 2) {
+        this.position.y = (this.area.position.y - this.area.height / 2) + (this.size + 2);
+        this.speed.decrease(new Vec(0.1, 0.1));
         this.speed.negativeY();
       }
 
-      if (
-        Math.round(this.position.x - this.size) < this.area.position.x - this.area.width / 2 ||
-        Math.round(this.position.x + this.size) >= this.area.position.x + this.area.width / 2
-      ) {
+      if (Math.round(this.position.y + this.size) >= this.area.position.y + this.area.height / 2) {
+        this.position.y = (this.area.position.y + this.area.height / 2) - (this.size + 2);
+        this.speed.decrease(new Vec(0.1, 0.1));
+        this.speed.negativeY();
+      }
+
+      if (Math.round(this.position.x - this.size) < this.area.position.x - this.area.width / 2) {
+        this.position.x = (this.area.position.x - this.area.width / 2) + (this.size + 2);
+        this.speed.decrease(new Vec(0.1, 0.1));
+        this.speed.negativeX();
+      }
+
+      if (Math.round(this.position.x + this.size) >= this.area.position.x + this.area.width / 2) {
+        this.position.x = (this.area.position.x + this.area.width / 2) - (this.size + 2);
+        this.speed.decrease(new Vec(0.1, 0.1));
         this.speed.negativeX();
       }
     }
@@ -78,6 +90,10 @@
       for (var i in bunch) {
         if (bunch[i].id !== this.id) {
           if (this.colision(bunch[i])) {
+            if (Math.round(this.speed.magnitude()) === 0) {
+              this.angle = bunch[i].angle;
+              this.speed.set(bunch[i].speed)
+            }
             this.speed.multiply(new Vec(-1, 1));
           }
         }
@@ -131,33 +147,49 @@
 
     }
 
+
+    function Cue(ball) {
+      this.ball = ball;
+      this.position = this.ball.position;
+      this.angle = 45;
+      this.visible = true;
+    }
+
+    Cue.prototype.draw = function() {
+      if (this.visible && Math.round(this.ball.speed.magnitude()) < 4) {
+        draw(this.position.x, this.position.y , cueAngle, function(ctx) {
+          ctx.beginPath();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = 'brown';
+          ctx.moveTo(0, 0);
+          ctx.lineTo(225, 0);
+          ctx.stroke();  
+        });
+      }
+    }
+
     var bunch = [];
     var area = new Area(900, 450);
     var realSizeArea = { x: vars.wh - 450, y: vars.hh - 245, width: vars.wh + 450, height: vars.hh + 245 };
     bunch.push(
       new Ball(
-        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-45),'white', area
+        new Vec(200, 300), Vec.fromNumber(0).setAngle(-45),'white', area
       )
     );
 
     bunch.push(
       new Ball(
-        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-10),'blue', area
+        new Vec(500, 300), Vec.fromNumber(0),'blue', area
       )
     );
 
     bunch.push(
       new Ball(
-        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(-20),'red', area
+        new Vec(600, 200), Vec.fromNumber(0),'red', area
       )
     );
 
-    bunch.push(
-      new Ball(
-        new Vec(u.random(realSizeArea.x, realSizeArea.width), u.random(realSizeArea.y, realSizeArea.height)), Vec.fromNumber(20).setAngle(45),'yellow', area
-      )
-    );
-
+    var cue = new Cue(bunch[0]);
 
 
     engine.update(function(ctx) {
@@ -168,8 +200,41 @@
         ball.update(bunch);
         ball.draw();
       });
+      cue.draw();
     });
 
+
+    document.body.addEventListener('mousedown', function() {
+      if (!cueForceTimerId) {
+        cueForceTimerId = setInterval(function() {
+          cueForce += 1;
+        }, 100);
+      }
+    });
+
+    document.body.addEventListener('mouseup', function(e) {
+
+      if (cueForceTimerId) {
+        var ball = bunch[0];
+        var mousePos = { x: e.clientX, y: e.clientY };
+        cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
+
+        clearInterval(cueForceTimerId);
+        cueForceTimerId = null;
+        ball.speed = Vec.fromNumber(cueForce);
+
+        cueForce = 0;
+      }
+    });
+
+    document.body.addEventListener('mousemove', function(e) {
+      if (cueForceTimerId) {
+        var ball = bunch[0];
+        var mousePos = { x: e.clientX, y: e.clientY };
+        cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
+        ball.angle = Math.round(cueAngle + 180);
+      }
+    });
 
     document.getElementById('start').addEventListener('click', function(e) {
       var isActive = e.target.getAttribute('data-active');
