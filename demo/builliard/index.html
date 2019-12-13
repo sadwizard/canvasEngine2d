@@ -86,15 +86,22 @@
     Ball.prototype.matchColision = function(bunch) {
       // bunch.map(function (item) {
       // });
+      var m = null;
 
       for (var i in bunch) {
         if (bunch[i].id !== this.id) {
-          if (this.colision(bunch[i])) {
-            if (Math.round(this.speed.magnitude()) === 0) {
-              this.angle = bunch[i].angle;
-              this.speed.set(bunch[i].speed)
-            }
-            this.speed.multiply(new Vec(-1, 1));
+          m = this.colision(bunch[i]);
+          if (m.match) {
+            this.position.sub(new Vec(-m.diff.x, -m.diff.y))
+            this.speed.negative();
+            // console.log((Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)))
+              // this.angle = (Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)) + 180;
+              // bunch[i].speed.add(this.speed);
+              // bunch[i].speed.add(this.speed)
+              // bunch[i].angle = this.speed.angle
+              // this.speed.negative();
+              // this.speed.add(bunch[i].speed);
+              // this.speed.negative();
           }
         }
       }
@@ -106,10 +113,10 @@
       var long = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
 
       if (long < item.size * 2) {
-        return true;
+        return { match: true, diff: {x: diffX, y: diffY} };
       }
 
-      return false;
+      return { match: false };
     }
 
 
@@ -192,7 +199,7 @@
     var cue = new Cue(bunch[0]);
 
 
-    engine.update(function(ctx) {
+    engine.update(function(ctx, t) {
       area.draw();
       bunch.map(function(ball) {
         ball.colisionWithArea();

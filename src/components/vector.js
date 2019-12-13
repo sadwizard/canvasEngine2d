@@ -1,13 +1,13 @@
-export function Vec(x, y) {
+export default function Vector(x, y) {
   this.x = x;
   this.y = y;
 }
 
-Vec.fromNumber = function(num) {
-  return new Vec(num, num);
+Vector.fromNumber = function(num) {
+  return new Vector(num, num);
 }
 
-Vec.prototype = {
+Vector.prototype = {
   set: function(vec) {
     this.x = vec.x;
     this.y = vec.y;
@@ -55,7 +55,7 @@ Vec.prototype = {
   setAngle: function(degree) {
     var angle = (degree) * (Math.PI / 180);
 
-    return new Vec(this.x * Math.cos(angle), this.y * Math.sin(angle));
+    return new Vector(this.x * Math.cos(angle), this.y * Math.sin(angle));
   },
   relativeAngle: function(vec) {
     var x = vec.x - this.x;
@@ -65,7 +65,7 @@ Vec.prototype = {
   relative: function(vec) {
     var x = vec.x - this.x;
     var y = vec.y - this.y;
-    return new Vec(x, y);
+    return new Vector(x, y);
   },
   negativeX: function() {
     this.x *= -1;
