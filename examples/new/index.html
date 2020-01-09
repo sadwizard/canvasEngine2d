@@ -14,21 +14,23 @@
   <canvas id="canvas"></canvas>
   <script src="../../bundle.js"></script>
   <script>
-    var canvas = new game2d.Init(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
-    var Body = game2d.Body;
+    var canvas = new game2d.Init(
+      document.getElementById('canvas'),
+      window.innerWidth, 
+      window.innerHeight,
+      '#333'
+    );
+    var Circle = game2d.Circle;
     var Vec = game2d.Vector;
 
-    var circle = new Body({
-      position: new Vec(30, 30),
-      width: 100,
-      height: 100,
+    var circle = new Circle({
+      position: new Vec(100, 100),
       radius: 50,
-      shape: 'circle'
     });
 
+    console.log(circle)
     canvas.addBody(circle);
-
-    canvas.run();
+    // canvas.run();
   </script>
 </body>
 </html>

@@ -8,7 +8,12 @@ import process from 'process';
 const plugins = [
   resolve(),
   commonJS({ include: 'node_modules/**' }),
-  babel({ exclude: 'node_modules/**' }),
+  babel({
+    exclude: 'node_modules/**',
+    presets: [
+      '@babel/preset-env'
+    ]
+  }),
   uglify()
 ];
 
