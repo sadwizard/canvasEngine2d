@@ -17177,6 +17177,11 @@ Vector.fromNumber = function (num) {
   return new Vector(num, num);
 };
 
+Vector.getNormal = function (vec2, vec1) {
+  var diff = vec2.clone().sub(vec1);
+  return new Vector(-diff.y, diff.x);
+};
+
 Vector.prototype = {
   set: function set(vec) {
     this.x = vec.x;
@@ -17201,7 +17206,12 @@ Vector.prototype = {
     this.y -= vec.y;
     return this;
   },
-  multiply: function multiply(vec) {
+  div: function div(vec) {
+    this.x = this.x / vec.x;
+    this.y = this.y / vec.y;
+    return this;
+  },
+  mul: function mul(vec) {
     this.x *= vec.x;
     this.y *= vec.y;
     return this;
@@ -17214,14 +17224,23 @@ Vector.prototype = {
   magnitude: function magnitude() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   },
-  relativeMagnitude: function relativeMagnitude(vec) {
+  distance: function distance(vec) {
     var x = vec.x - this.x;
     var y = vec.y - this.y;
     return Math.sqrt(x * x + y * y);
   },
-  setAngle: function setAngle(degree) {
+  toAngle: function toAngle(degree) {
     var angle = degree * (Math.PI / 180);
     return new Vector(this.x * Math.cos(angle), this.y * Math.sin(angle));
+  },
+  rotateToPoint: function rotateToPoint(center, angle) {
+    var angleRad = angle * (Math.PI / 180);
+    var rotatedX = Math.cos(angleRad) * (this.x - center.x) - Math.sin(angleRad) * (this.y - center.y) + center.x;
+    var rotatedY = Math.sin(angleRad) * (this.x - center.x) + Math.cos(angleRad) * (this.y - center.y) + center.y;
+    return new Vector(rotatedX, rotatedY);
+  },
+  angle: function angle() {
+    return Math.atan2(this.y, this.x);
   },
   relativeAngle: function relativeAngle(vec) {
     var x = vec.x - this.x;
@@ -17241,10 +17260,41 @@ Vector.prototype = {
     this.y *= -1;
     return this;
   },
-  negative: function negative(vec) {
+  negative: function negative() {
     this.x *= -1;
     this.y *= -1;
     return this;
+  },
+  divScalar: function divScalar(scalar) {
+    this.x = this.x / scalar;
+    this.y = this.y / scalar;
+    return this;
+  },
+  mulScalar: function mulScalar(scalar) {
+    this.x *= scalar;
+    this.y *= scalar;
+    return this;
+  },
+  normalize: function normalize() {
+    var length = this.magnitude();
+
+    if (length === 0) {
+      this.x = 1;
+      this.y = 0;
+    } else {
+      this.div(new Vector(length, length));
+    }
+
+    return this;
+  },
+  normalL: function normalL() {
+    return new Vector(-this.y, this.x);
+  },
+  normalR: function normalR() {
+    return new Vector(this.y, -this.x);
+  },
+  clone: function clone() {
+    return new Vector(this.x, this.y);
   }
 };
 
@@ -17269,6 +17319,8 @@ var utils = /*#__PURE__*/Object.freeze({
   randomColor: randomColor
 });
 
+var V = Vector;
+
 var Body =
 /*#__PURE__*/
 function () {
@@ -17280,11 +17332,14 @@ function () {
     var id = randomColor();
     var defaults = {
       id: id,
-      isStatic: false,
-      position: new Vector(0, 0),
+      "static": false,
+      position: new V(0, 0),
       scale: 1,
-      speed: new Vector(0, 0),
-      forces: new Vector(1, 1),
+      forces: new V(0, 1),
+      acceleration: new V(0, 0),
+      velocity: new V(0, 0),
+      angularVelocity: 0,
+      angularAcceleration: 0,
       angle: 0,
       mass: 1
     };
@@ -17303,8 +17358,43 @@ function () {
     }
   }, {
     key: "update",
-    value: function update() {
-      this.position.add(this.forces);
+    value: function update(dt) {
+      if (this.updateFn) {
+        return this.updateFn(this);
+      }
+
+      if (this["static"]) return;
+      var d = dt * 0.01;
+      var prevPosition = this.position.clone(); // console.log(new V(0, 1).toAngle(this.angle))
+      // this.forces.add(new V(0, 1)) // apply gravity
+
+      console.log(); // console.log(this.forces.clone().divisionScalar(this.mass))
+
+      this.acceleration.add(this.forces.divScalar(this.mass));
+      this.velocity.add(this.acceleration);
+      this.position.add(this.velocity.clone().mulScalar(d));
+      this.angularVelocity = this.angularVelocity * d;
+      this.angle = this.angle + this.angularVelocity; // calc speed
+      // this.speed = this.position.clone().sub(prevPosition).divisionScalar(d);
+      // console.log(this.speed.magnitude())
+
+      this.acceleration.mulScalar(0); // this.velocity.multiplyScalar(0)
+    }
+  }, {
+    key: "collision",
+    value: function collision(obj) {
+      if (this["static"]) return;
+      var objPoints = obj.getTransformedVertices();
+      var n = V.getNormal(objPoints.topRight, objPoints.topLeft); // console.log(360 / (2 * Math.PI) * n.angle())
+
+      var d = obj.position.y - obj.height / 2;
+
+      if (this.position.y + this.radius >= d) {
+        this.velocity.y *= -1;
+        this.forces.add(n);
+        this.position.y = d - this.radius;
+      } // this.forces.add(new V(-110, -110));
+
     }
   }]);
 
@@ -17341,29 +17431,34 @@ function () {
 var Ticker =
 /*#__PURE__*/
 function () {
-  function Ticker(ctx, clearSize, FPS) {
+  function Ticker(ctx, options) {
     var _this = this;
 
     _classCallCheck(this, Ticker);
 
-    this.clearSize = clearSize;
+    var FPS = options.FPS,
+        _options$tieRender = options.tieRender,
+        tieRender = _options$tieRender === void 0 ? true : _options$tieRender;
     this.id = null;
     this.FPS = FPS || 1000 / 60;
 
     this.updateFunc = function () {};
 
-    this.ctx = ctx;
+    this.tieRender = tieRender;
     this.time = null;
 
     this.tick = function () {
-      var now = Date.now();
+      if (_this.tieRender) {
+        var now = Date.now();
+        var dt = now - _this.time;
 
-      if (_this.updateFunc && now - _this.time >= _this.FPS) {
-        _this.ctx.clearRect(0, 0, _this.clearSize.w, _this.clearSize.h);
+        if (_this.updateFunc && dt >= _this.FPS) {
+          _this.updateFunc(dt);
 
-        _this.updateFunc(now);
-
-        _this.time = now;
+          _this.time = now;
+        }
+      } else {
+        _this.updateFunc();
       }
 
       _this.id = requestAnimationFrame(_this.tick);
@@ -17421,13 +17516,128 @@ function () {
   return Render;
 }();
 
-var Core =
+var SHAPE_TYPES = {
+  CIRCLE: 'circle_type',
+  RECTANGLE: 'rectangle_type'
+};
+
+var Collision =
 /*#__PURE__*/
 function () {
-  function Core(node, width, height, backgroundColor) {
-    _classCallCheck(this, Core);
+  function Collision() {
+    _classCallCheck(this, Collision);
+  }
 
-    var FPS = 1000 / 30;
+  _createClass(Collision, [{
+    key: "update",
+    value: function update(objects) {
+      var obj = objects.filter(function (i) {
+        return !i.kinematic || !i.visible;
+      });
+      this._currentCollisionPairs = []; // get all entity pairs to test for collision
+
+      for (var i = 0, len = obj.length; i < len; i++) {
+        for (var j = i + 1; j < len; j++) {
+          this._currentCollisionPairs.push([obj[i], obj[j]]);
+        }
+      } // test collisions
+
+
+      while (this._currentCollisionPairs.length > 0) {
+        var pair = this._currentCollisionPairs.shift();
+
+        if (this.isColliding(pair[0], pair[1])) {
+          this.collision(pair[0], pair[1]);
+        }
+      }
+    }
+  }, {
+    key: "collision",
+    value: function collision(obj1, obj2) {
+      obj1.collision(obj2);
+    }
+  }, {
+    key: "isIntersecting",
+    value: function isIntersecting(obj1, obj2) {
+      if (obj1.type === SHAPE_TYPES.CIRCLE && obj2.type === SHAPE_TYPES.CIRCLE) {
+        return this.circleIntersection(obj1, obj2);
+      } else if (obj1.type === SHAPE_TYPES.CIRCLE && obj2.type === SHAPE_TYPES.RECTANGLE) {
+        return this.circleRectangleIntersection(obj1, obj2);
+      } else if (obj1.type === SHAPE_TYPES.RECTANGLE && obj2.type === SHAPE_TYPES.CIRCLE) {
+        return this.circleRectangleIntersection(obj2, obj1);
+      } else if (obj1.type === SHAPE_TYPES.RECTANGLE && obj2.type === SHAPE_TYPES.RECTANGLE) {
+        return this.rectangleIntersection(obj1, obj2);
+      }
+    }
+  }, {
+    key: "isColliding",
+    value: function isColliding(obj1, obj2) {
+      return obj1 !== obj2 && this.isIntersecting(obj1, obj2);
+    }
+  }, {
+    key: "circleIntersection",
+    value: function circleIntersection(obj1, obj2) {
+      return obj1.position.distance(obj2.position) < obj1.radius + obj2.radius;
+    }
+  }, {
+    key: "circleRectangleIntersection",
+    value: function circleRectangleIntersection(obj1, obj2) {
+      var rectCorners = obj2.getEdges();
+      var rotatedCircle = obj1.position.rotateToPoint(obj2.position, -obj2.angle);
+      var testX, testY; // which edge is closest?
+
+      if (rotatedCircle.x < rectCorners.left) {
+        testX = rectCorners.left;
+      } else if (rotatedCircle.x > rectCorners.right) {
+        testX = rectCorners.right;
+      } else {
+        testX = rotatedCircle.x;
+      }
+
+      if (rotatedCircle.y < rectCorners.top) {
+        testY = rectCorners.top;
+      } else if (rotatedCircle.y > rectCorners.bottom) {
+        testY = rectCorners.bottom;
+      } else {
+        testY = rotatedCircle.y;
+      }
+
+      var distX = rotatedCircle.x - testX;
+      var distY = rotatedCircle.y - testY;
+      var distance = Math.sqrt(distX * distX + distY * distY);
+
+      if (distance <= obj1.radius) {
+        return true;
+      }
+
+      return false;
+    }
+  }, {
+    key: "rectangleIntersection",
+    value: function rectangleIntersection(obj1, obj2) {
+      if (obj1.angle !== 0 || obj2.angle !== 0) {
+        var c1 = obj1.getEdges();
+        var c2 = obj2.getEdges();
+        return !(c2.left > c1.right || c2.right < c1.left || c2.top > c1.bottom || c2.bottom < c1.top);
+      } // todo: rotated rectangle intersection
+
+
+      var vert1 = obj1.getTransformedVertices();
+      var vert2 = obj2.getTransformedVertices();
+      return false;
+    }
+  }]);
+
+  return Collision;
+}();
+
+var Game2d =
+/*#__PURE__*/
+function () {
+  function Game2d(node, width, height, backgroundColor) {
+    _classCallCheck(this, Game2d);
+
+    var FPS = 1000 / 40;
     this.canvas = node;
     this.ctx = node.getContext('2d');
     this.canvas.width = width;
@@ -17441,14 +17651,19 @@ function () {
     };
     this.ctx.globalAlpha = 1;
     this.objects = [];
-    this.ticker = new Ticker(this.ctx, {
-      w: width,
-      h: height
-    }, FPS);
+    this.tickerUpdate = new Ticker(this.ctx, {
+      FPS: FPS,
+      tieRender: true
+    });
+    this.tickerRender = new Ticker(this.ctx, {
+      tieRender: false
+    });
     this.renderer = new Render(this.ctx);
+    this.collisions = new Collision();
+    return this;
   }
 
-  _createClass(Core, [{
+  _createClass(Game2d, [{
     key: "addBody",
     value: function addBody() {
       var _this = this;
@@ -17478,24 +17693,32 @@ function () {
       var _this2 = this;
 
       var drawer = this.renderer.draw.bind(this);
-      this.ticker.setUpdateFunc(function (time) {
-        console.log(time);
+      this.tickerRender.setUpdateFunc(function () {
+        _this2.ctx.clearRect(0, 0, _this2.vars.w, _this2.vars.h);
 
         lodash.map(_this2.objects, function (item) {
           item.render(drawer);
-          item.update();
         });
       });
-      this.ticker.start();
+      this.tickerUpdate.setUpdateFunc(function (dt) {
+        _this2.collisions.update(_this2.objects);
+
+        lodash.map(_this2.objects, function (item) {
+          item.update(dt);
+        });
+      });
+      this.tickerRender.start();
+      this.tickerUpdate.start();
     }
   }, {
     key: "stop",
     value: function stop() {
-      this.ticker.stop();
+      this.tickerRender.stop();
+      this.tickerUpdate.stop();
     }
   }]);
 
-  return Core;
+  return Game2d;
 }();
 
 var Shape =
@@ -17516,6 +17739,65 @@ function (_Body) {
         ctx.stroke();
       }
     }
+  }, {
+    key: "getEdges",
+    value: function getEdges(isArray) {
+      // Clockwise
+      var obj = this;
+
+      if (obj.type !== SHAPE_TYPES.RECTANGLE) {
+        throw new Error('type object should be rectanlge');
+      }
+
+      if (isArray) {
+        return [obj.position.y - obj.height / 2, obj.position.x + obj.width / 2, obj.position.y + obj.height / 2, obj.position.x - obj.width / 2];
+      }
+
+      return {
+        left: obj.position.x - obj.width / 2,
+        top: obj.position.y - obj.height / 2,
+        right: obj.position.x + obj.width / 2,
+        bottom: obj.position.y + obj.height / 2
+      };
+    }
+  }, {
+    key: "getTransformedVertices",
+    value: function getTransformedVertices(isArray) {
+      var obj = this;
+
+      if (obj.type !== SHAPE_TYPES.RECTANGLE) {
+        throw new Error('type object should be rectanlge');
+      }
+
+      var c = obj.getEdges(true);
+
+      if (isArray) {
+        return [new Vector(c.left, c.top).rotateToPoint(obj.position, obj.angle), new Vector(c.right, c.top).rotateToPoint(obj.position, obj.angle), new Vector(c.right, c.bottom).rotateToPoint(obj.position, obj.angle), new Vector(c.left, c.bottom).rotateToPoint(obj.position, obj.angle)];
+      }
+
+      return {
+        topLeft: new Vector(c.left, c.top).rotateToPoint(obj.position, obj.angle),
+        topRight: new Vector(c.right, c.top).rotateToPoint(obj.position, obj.angle),
+        bottomRight: new Vector(c.right, c.bottom).rotateToPoint(obj.position, obj.angle),
+        bottomLeft: new Vector(c.left, c.bottom).rotateToPoint(obj.position, obj.angle)
+      };
+    }
+  }, {
+    key: "getNormals",
+    value: function getNormals() {
+      var vertices = this.getTransformedVertices(true);
+      var norms = [],
+          n;
+
+      for (var i = 1; i < vertices.length; i++) {
+        var _p = vertices[i - 1],
+            _p2 = vertices[i];
+        n = new Vector(_p2.x - _p.x, _p2.y - _p.y).normalR();
+        norms.push(n);
+      }
+
+      return norms;
+    }
   }]);
 
   return Shape;
@@ -17533,7 +17815,7 @@ function (_Shape) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Rectangle).call(this, params));
     var defaults = {
-      shape: 'rectangle',
+      type: SHAPE_TYPES.RECTANGLE,
       position: new Vector(0, 0),
       scale: 1,
       width: 10,
@@ -17541,8 +17823,7 @@ function (_Shape) {
       angle: 0,
       fillStyle: _this.id,
       strokeStyle: 0,
-      strokeWidth: 0,
-      radius: 10
+      strokeWidth: 0
     };
 
     var extendedOpts = lodash.extend(defaults, params);
@@ -17561,7 +17842,6 @@ function (_Shape) {
           width = this.width,
           height = this.height,
           angle = this.angle,
-          radius = this.radius,
           fillStyle = this.fillStyle,
           strokeStyle = this.strokeStyle,
           strokeWidth = this.strokeWidth;
@@ -17569,11 +17849,12 @@ function (_Shape) {
         ctx.fillStyle = fillStyle;
         ctx.strokeStyle = strokeStyle;
         ctx.strokeWidth = strokeWidth;
-        ctx.rect(position.x - width / 2, position.y - height / 2, width, height);
-        ctx.fill();
 
         if (strokeWidth > 0) {
+          ctx.rect(-(width / 2), -(height / 2), width, height);
           ctx.stroke();
+        } else {
+          ctx.fillRect(-(width / 2), -(height / 2), width, height);
         }
       });
     }
@@ -17594,7 +17875,7 @@ function (_Shape) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Circle).call(this, params));
     var defaults = {
-      shape: 'circle',
+      type: SHAPE_TYPES.CIRCLE,
       position: new Vector(0, 0),
       scale: 1,
       angle: 0,
@@ -17627,7 +17908,7 @@ function (_Shape) {
         ctx.strokeStyle = strokeStyle;
         ctx.strokeWidth = strokeWidth;
         ctx.beginPath();
-        ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+        ctx.arc(0, 0, radius, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.fill();
 
@@ -17662,11 +17943,11 @@ function keyboardEvents() {
   };
 }
 
-window.game2d = {
-  Init: Core,
-  Rectangle: Rectangle,
+Game2d.shapes = {
   Circle: Circle,
-  Vector: Vector,
-  utils: utils,
-  keyboard: keyboardEvents
+  Rect: Rectangle
 };
+Game2d.Vector = Vector;
+Game2d.utils = utils;
+Game2d.keyboardEvents = keyboardEvents;
+window.Game2d = Game2d;

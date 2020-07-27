@@ -7,6 +7,11 @@ Vector.fromNumber = function(num) {
   return new Vector(num, num);
 }
 
+Vector.getNormal = function(vec2, vec1) {
+  const diff = vec2.clone().sub(vec1);
+  return new Vector(-diff.y, diff.x);
+}
+
 Vector.prototype = {
   set: function(vec) {
     this.x = vec.x;
@@ -33,7 +38,13 @@ Vector.prototype = {
 
     return this;
   },
-  multiply: function(vec) {
+  div: function(vec) {
+    this.x = this.x / vec.x;
+    this.y = this.y / vec.y;
+
+    return this;
+  },
+  mul: function(vec) {
     this.x *= vec.x;
     this.y *= vec.y;
 
@@ -47,15 +58,24 @@ Vector.prototype = {
   magnitude: function() {
     return Math.sqrt((this.x * this.x) + (this.y * this.y));
   },
-  relativeMagnitude: function(vec) {
+  distance: function(vec) {
     var x = vec.x - this.x;
     var y = vec.y - this.y;
     return Math.sqrt(x * x + y * y);
   },
-  setAngle: function(degree) {
-    var angle = (degree) * (Math.PI / 180);
+  toAngle: function(degree) {
+    var angle = degree * (Math.PI / 180);
 
     return new Vector(this.x * Math.cos(angle), this.y * Math.sin(angle));
+  },
+  rotateToPoint(center, angle) {
+    const angleRad = angle * (Math.PI/180);
+    const rotatedX = Math.cos(angleRad) * (this.x - center.x) - Math.sin(angleRad) * (this.y - center.y) + center.x;
+    const rotatedY = Math.sin(angleRad) * (this.x - center.x) + Math.cos(angleRad) * (this.y - center.y) + center.y;
+    return new Vector(rotatedX, rotatedY);
+  },
+  angle() {
+    return Math.atan2(this.y, this.x);
   },
   relativeAngle: function(vec) {
     var x = vec.x - this.x;
@@ -75,9 +95,39 @@ Vector.prototype = {
     this.y *= -1;
     return this;
   },
-  negative: function(vec) {
+  negative: function() {
     this.x *= -1;
     this.y *= -1;
     return this;
+  },
+  divScalar: function(scalar) {
+    this.x = this.x / scalar;
+    this.y = this.y / scalar;
+    return this;
+  },
+  mulScalar: function(scalar) {
+    this.x *= scalar;
+    this.y *= scalar;
+    return this;
+  },
+  normalize: function() {
+    const length = this.magnitude();
+
+    if (length === 0) {
+  		this.x = 1;
+  		this.y = 0;
+  	} else {
+  		this.div(new Vector(length, length));
+  	}
+  	return this;
+  },
+  normalL: function () {
+    return new Vector(-this.y, this.x);
+  },
+  normalR: function () {
+    return new Vector(this.y, -this.x);
+  },
+  clone: function() {
+    return new Vector(this.x, this.y);
   }
 };

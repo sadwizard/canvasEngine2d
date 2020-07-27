@@ -1,13 +1,14 @@
 import _ from 'lodash';
 import Vector from './../vector';
 import Shape from './shape';
+import { SHAPE_TYPES } from './../constants';
 
 export default class Circle extends Shape {
     constructor(params) {
         super(params);
 
         const defaults = {
-            shape: 'circle',
+            type: SHAPE_TYPES.CIRCLE,
             position: new Vector(0, 0),
             scale: 1,
             angle: 0,
@@ -32,7 +33,7 @@ export default class Circle extends Shape {
             ctx.strokeStyle = strokeStyle;
             ctx.strokeWidth = strokeWidth;
             ctx.beginPath();
-            ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+            ctx.arc(0, 0, radius, 0, Math.PI * 2, true);
             ctx.closePath();
             ctx.fill();
             if (strokeWidth > 0) {

@@ -2,10 +2,11 @@ import _ from 'lodash';
 import Body from './body';
 import Ticker from './ticker';
 import Render from './render';
+import Collision from './collision';
 
-export default class Core {
+export default class Game2d {
     constructor(node, width, height, backgroundColor) {
-        const FPS = 1000 / 30;
+        const FPS = 1000 / 40;
 
         this.canvas = node;
         this.ctx = node.getContext('2d');
@@ -21,8 +22,12 @@ export default class Core {
 
         this.ctx.globalAlpha = 1;
         this.objects = [];
-        this.ticker = new Ticker(this.ctx, { w: width, h: height }, FPS);
+        this.tickerUpdate = new Ticker(this.ctx, { FPS, tieRender: true });
+        this.tickerRender = new Ticker(this.ctx, { tieRender: false })
         this.renderer = new Render(this.ctx);
+        this.collisions = new Collision();
+
+        return this;
     }
 
     addBody(...args) {
@@ -40,17 +45,26 @@ export default class Core {
 
     run() {
         const drawer = this.renderer.draw.bind(this);
-        this.ticker.setUpdateFunc((time) => {
-            console.log(time)
-            _.map(this.objects, (item) => {
-                item.render(drawer);
-                item.update();
-            });
+        this.tickerRender.setUpdateFunc(() => {
+          this.ctx.clearRect(0, 0, this.vars.w, this.vars.h);
+          _.map(this.objects, (item) => {
+            item.render(drawer);
+          });
         });
-        this.ticker.start();
+
+        this.tickerUpdate.setUpdateFunc((dt) => {
+          this.collisions.update(this.objects);
+          _.map(this.objects, (item) => {
+            item.update(dt);
+          });
+        })
+
+        this.tickerRender.start();
+        this.tickerUpdate.start();
     }
 
     stop() {
-        this.ticker.stop();
+      this.tickerRender.stop();
+      this.tickerUpdate.stop();
     }
 }

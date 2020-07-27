@@ -1,6 +1,6 @@
 export default class Render {
     constructor(ctx) {
-	   this.ctx = ctx; 
+	     this.ctx = ctx;
     }
 
     draw(x, y, deg, drawFunction) {

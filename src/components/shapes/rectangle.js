@@ -1,13 +1,14 @@
 import _ from 'lodash';
 import Vector from '../vector';
 import Shape from './shape';
+import { SHAPE_TYPES } from './../constants';
 
 export default class Rectangle extends Shape {
     constructor(params) {
         super(params);
 
         const defaults = {
-            shape: 'rectangle',
+            type: SHAPE_TYPES.RECTANGLE,
             position: new Vector(0, 0),
             scale: 1,
             width: 10,
@@ -16,7 +17,6 @@ export default class Rectangle extends Shape {
             fillStyle: this.id,
             strokeStyle: 0,
             strokeWidth: 0,
-            radius: 10,
         };
 
         const extendedOpts = _.extend(defaults, params);
@@ -27,16 +27,18 @@ export default class Rectangle extends Shape {
     }
 
     draw(drawer) {
-        const { position, width, height, angle, radius, fillStyle, strokeStyle, strokeWidth } = this;
+        const { position, width, height, angle, fillStyle, strokeStyle, strokeWidth } = this;
 
         drawer(position.x, position.y, angle, (ctx) => {
             ctx.fillStyle = fillStyle;
             ctx.strokeStyle = strokeStyle;
             ctx.strokeWidth = strokeWidth;
-            ctx.rect(position.x - width / 2, position.y - height / 2, width, height);
-            ctx.fill();
+
             if (strokeWidth > 0) {
+                ctx.rect(-(width / 2), -(height / 2), width, height);
                 ctx.stroke();
+            } else {
+                ctx.fillRect(-(width / 2), -(height / 2), width, height);
             }
         });
     }

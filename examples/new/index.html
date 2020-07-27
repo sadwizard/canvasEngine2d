@@ -14,23 +14,33 @@
   <canvas id="canvas"></canvas>
   <script src="../../bundle.js"></script>
   <script>
-    var canvas = new game2d.Init(
+    var canvas = new Game2d(
       document.getElementById('canvas'),
-      window.innerWidth, 
+      window.innerWidth,
       window.innerHeight,
       '#333'
     );
-    var Circle = game2d.Circle;
-    var Vec = game2d.Vector;
+    var Circle = Game2d.shapes.Circle;
+    var Rect = Game2d.shapes.Rect;
+    var Vec = Game2d.Vector;
+    var size = { w: window.innerWidth, h: window.innerHeight };
 
-    var circle = new Circle({
-      position: new Vec(100, 100),
-      radius: 50,
-    });
+    canvas.addBody(
+      // new Circle({ position: new Vec(100, 100), radius: 50, angle: 90 }),
+      new Circle({ position: new Vec(220, 100), radius: 50, angle: 90 }),
 
-    console.log(circle)
-    canvas.addBody(circle);
-    // canvas.run();
+      // new Rect({ position: new Vec(100, 100), width: 50, height: 50, static: true }),
+      // new Rect({ position: new Vec(100, 151), width: 50, height: 50, static: true, angle: 45 }),
+
+      // floor
+      new Rect({ position: new Vec(size.w/2, size.h), static: true, width: size.w, height: 20, angle: 0 })
+    );
+
+    canvas.run();
+
+    setTimeout(function () {
+      canvas.stop()
+    }, 10000)
   </script>
 </body>
 </html>

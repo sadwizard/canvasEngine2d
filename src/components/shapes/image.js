@@ -2,11 +2,12 @@ import _ from 'lodash';
 import Vector from '../vector';
 import Shape from './shape';
 
+
 export default function Image(params) {
     Shape.call(this, params);
 
     const defaults = {
-        shape: 'image',
+        type: 'image',
         isStatic: false,
         position: new Vector(0, 0),
         scale: 1,

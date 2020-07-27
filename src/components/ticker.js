@@ -1,26 +1,29 @@
 import requestAnimationFramePolifil from '../vendor/rafPolifil.js';
 
 export default class Ticker {
-    constructor(ctx, clearSize, FPS) {
-        this.clearSize = clearSize;
+    constructor(ctx, options) {
+        const { FPS, tieRender = true } = options;
         this.id = null;
         this.FPS = FPS || 1000 / 60;
         this.updateFunc = () => {};
-        this.ctx = ctx;
+        this.tieRender = tieRender;
         this.time = null;
 
         this.tick = () => {
-            var now = Date.now();
+            if (this.tieRender) {
+              var now = Date.now();
+              var dt = now - this.time;
 
-            if (this.updateFunc && now - this.time >= this.FPS) {
-                this.ctx.clearRect(0, 0, this.clearSize.w, this.clearSize.h);
-
-                this.updateFunc(now);
-                this.time = now;
+              if (this.updateFunc && dt >= this.FPS) {
+                  this.updateFunc(dt);
+                  this.time = now;
+              }
+            } else {
+              this.updateFunc();
             }
 
             this.id = requestAnimationFrame(this.tick);
-        }   
+        }
     }
 
     start() {
