@@ -121,10 +121,10 @@ Vector.prototype = {
   	}
   	return this;
   },
-  normalL: function () {
+  normalL: function() {
     return new Vector(-this.y, this.x);
   },
-  normalR: function () {
+  normalR: function() {
     return new Vector(this.y, -this.x);
   },
   clone: function() {
