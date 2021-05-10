@@ -19,7 +19,7 @@
     "rollup-plugin-uglify": "^6.0.0"
   },
   "dependencies": {
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "node.packer": "^2.0.3",
     "nodemon": "^1.18.4"
   },
