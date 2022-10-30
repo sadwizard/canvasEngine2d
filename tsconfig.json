@@ -1,9 +1,12 @@
 {
     "compilerOptions": {
+        "strict": true,
+        "allowJs": false,
+        "incremental": true,
         "target": "es2020",
         "baseUrl": ".",
         "paths": {
-            "#/*": ["./*"]
+            "#/*": ["src/*"]
         },
         "skipLibCheck": true,
         "removeComments": false

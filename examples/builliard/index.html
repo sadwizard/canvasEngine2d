@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>sample1</title>
+  <title>billiard</title>
 </head>
 <body>
   <style>
@@ -17,16 +17,14 @@
       top: 4px;
     }
   </style>
-  <button id="start" data-active="">start</button>
   <canvas id="canvas"></canvas>
-  <script src="../../bundle.js"></script>
+  <script src="../../dist/bundle.js"></script>
   <script>
-    var canvas = new CanvasEngine(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#000');
-    var vars = canvas.vars;
-    var Vec = canvas.Vec;
-    var engine = canvas.Engine;
-    var draw = canvas.Engine.draw;
-    var u = canvas.utils;
+    var app = new game2d.App(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
+    var screen = app.screen;
+    var Vec = game2d.Vector;
+    var u = game2d.utils;
+    var shapes = game2d.shapes;
     var G = 6.67;
     var dt = 0.03;
 
@@ -36,226 +34,229 @@
     var cueAngle = 0
     var cueForceTimerId = null;
 
-    // canvas.ctx.globalAlpha = 1;
-    // canvas.ctx.globalCompositeOperation = 'lighter';
-    // canvas.ctx.shadowBlur = 1;
-    // canvas.ctx.shadowColor = '#fff';
+    var table = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 400 , fillStyle: 'green'});
+    var borderTop = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 10 , fillStyle: '#5a2c2c'});
+    var borderLeft = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 400 , fillStyle: '#5a2c2c'});
+    var borders = new game2d.Group()
 
-    function Ball(position, vel, color, area) {
-      this.id = String(u.random(100, 900));
-      this.position = position;
-      this.m = 10;
-      this.speed = vel || new Vec(0,0);
-      this.size = 14;
-      this.angle = 90;
-      this.bg = color;
-      this.area = area;
-    }
+    app.addBody(table);
 
-    Ball.prototype.update = function(bunch) {
-      this.speed.decrease(new Vec(0.05, 0.05));
-      this.position.add(this.speed.setAngle(this.angle));
-    }
+    app.print();
+    // function Ball(position, vel, color, area) {
+    //   this.id = String(u.random(100, 900));
+    //   this.position = position;
+    //   this.m = 10;
+    //   this.speed = vel || new Vec(0,0);
+    //   this.size = 14;
+    //   this.angle = 90;
+    //   this.bg = color;
+    //   this.area = area;
+    // }
 
-    Ball.prototype.colisionWithArea = function() {
-      if (Math.round(this.position.y - this.size) < this.area.position.y - this.area.height / 2) {
-        this.position.y = (this.area.position.y - this.area.height / 2) + (this.size + 2);
-        this.speed.decrease(new Vec(0.1, 0.1));
-        this.speed.negativeY();
-      }
+    // Ball.prototype.update = function(bunch) {
+    //   this.speed.decrease(new Vec(0.05, 0.05));
+    //   this.position.add(this.speed.setAngle(this.angle));
+    // }
 
-      if (Math.round(this.position.y + this.size) >= this.area.position.y + this.area.height / 2) {
-        this.position.y = (this.area.position.y + this.area.height / 2) - (this.size + 2);
-        this.speed.decrease(new Vec(0.1, 0.1));
-        this.speed.negativeY();
-      }
+    // Ball.prototype.colisionWithArea = function() {
+    //   if (Math.round(this.position.y - this.size) < this.area.position.y - this.area.height / 2) {
+    //     this.position.y = (this.area.position.y - this.area.height / 2) + (this.size + 2);
+    //     this.speed.decrease(new Vec(0.1, 0.1));
+    //     this.speed.negativeY();
+    //   }
 
-      if (Math.round(this.position.x - this.size) < this.area.position.x - this.area.width / 2) {
-        this.position.x = (this.area.position.x - this.area.width / 2) + (this.size + 2);
-        this.speed.decrease(new Vec(0.1, 0.1));
-        this.speed.negativeX();
-      }
+    //   if (Math.round(this.position.y + this.size) >= this.area.position.y + this.area.height / 2) {
+    //     this.position.y = (this.area.position.y + this.area.height / 2) - (this.size + 2);
+    //     this.speed.decrease(new Vec(0.1, 0.1));
+    //     this.speed.negativeY();
+    //   }
 
-      if (Math.round(this.position.x + this.size) >= this.area.position.x + this.area.width / 2) {
-        this.position.x = (this.area.position.x + this.area.width / 2) - (this.size + 2);
-        this.speed.decrease(new Vec(0.1, 0.1));
-        this.speed.negativeX();
-      }
-    }
+    //   if (Math.round(this.position.x - this.size) < this.area.position.x - this.area.width / 2) {
+    //     this.position.x = (this.area.position.x - this.area.width / 2) + (this.size + 2);
+    //     this.speed.decrease(new Vec(0.1, 0.1));
+    //     this.speed.negativeX();
+    //   }
 
-    Ball.prototype.matchColision = function(bunch) {
-      // bunch.map(function (item) {
-      // });
-      var m = null;
+    //   if (Math.round(this.position.x + this.size) >= this.area.position.x + this.area.width / 2) {
+    //     this.position.x = (this.area.position.x + this.area.width / 2) - (this.size + 2);
+    //     this.speed.decrease(new Vec(0.1, 0.1));
+    //     this.speed.negativeX();
+    //   }
+    // }
 
-      for (var i in bunch) {
-        if (bunch[i].id !== this.id) {
-          m = this.colision(bunch[i]);
-          if (m.match) {
-            this.position.sub(new Vec(-m.diff.x, -m.diff.y))
-            this.speed.negative();
-            // console.log((Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)))
-              // this.angle = (Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)) + 180;
-              // bunch[i].speed.add(this.speed);
-              // bunch[i].speed.add(this.speed)
-              // bunch[i].angle = this.speed.angle
-              // this.speed.negative();
-              // this.speed.add(bunch[i].speed);
-              // this.speed.negative();
-          }
-        }
-      }
-    }
+    // Ball.prototype.matchColision = function(bunch) {
+    //   // bunch.map(function (item) {
+    //   // });
+    //   var m = null;
 
-    Ball.prototype.colision = function(item) {
-      var diffX = this.position.x - item.position.x;
-      var diffY = this.position.y - item.position.y;
-      var long = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
+    //   for (var i in bunch) {
+    //     if (bunch[i].id !== this.id) {
+    //       m = this.colision(bunch[i]);
+    //       if (m.match) {
+    //         this.position.sub(new Vec(-m.diff.x, -m.diff.y))
+    //         this.speed.negative();
+    //         // console.log((Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)))
+    //           // this.angle = (Math.atan2(m.diff.x, m.diff.y) / (Math.PI / 180)) + 180;
+    //           // bunch[i].speed.add(this.speed);
+    //           // bunch[i].speed.add(this.speed)
+    //           // bunch[i].angle = this.speed.angle
+    //           // this.speed.negative();
+    //           // this.speed.add(bunch[i].speed);
+    //           // this.speed.negative();
+    //       }
+    //     }
+    //   }
+    // }
 
-      if (long < item.size * 2) {
-        return { match: true, diff: {x: diffX, y: diffY} };
-      }
+    // Ball.prototype.colision = function(item) {
+    //   var diffX = this.position.x - item.position.x;
+    //   var diffY = this.position.y - item.position.y;
+    //   var long = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
 
-      return { match: false };
-    }
+    //   if (long < item.size * 2) {
+    //     return { match: true, diff: {x: diffX, y: diffY} };
+    //   }
 
-
-    Ball.prototype.draw = function() {
-      var self = this;
-      draw(this.position.x, this.position.y, 0, function(ctx) {
-        ctx.fillStyle = self.bg;
-        ctx.beginPath();
-        ctx.arc(0, 0, self.size, 0, Math.PI * 2, true);
-        ctx.fill();
-      });
-    }
-
-    function Area(width, height) {
-      this.position = new Vec(vars.wh, vars.hh);
-      this.width = width;
-      this.height = height;
-      this.bg = '#3d8229';
-    }
-
-    Area.prototype.draw = function() {
-      var self = this;
-      draw(this.position.x, this.position.y, 0, function(ctx) {
-        ctx.fillStyle = self.bg;
-        ctx.fillRect(-(self.width / 2), -(self.height / 2), self.width, self.height);
-      });
-
-      draw(300, this.position.y, 0, function(ctx) {
-        ctx.beginPath();
-        ctx.strokeStyle = '#fff';
-        ctx.moveTo(0, -225);
-        ctx.lineTo(0, 225);
-        ctx.stroke();  
-      });
-
-    }
+    //   return { match: false };
+    // }
 
 
-    function Cue(ball) {
-      this.ball = ball;
-      this.position = this.ball.position;
-      this.angle = 45;
-      this.visible = true;
-    }
+    // Ball.prototype.draw = function() {
+    //   var self = this;
+    //   draw(this.position.x, this.position.y, 0, function(ctx) {
+    //     ctx.fillStyle = self.bg;
+    //     ctx.beginPath();
+    //     ctx.arc(0, 0, self.size, 0, Math.PI * 2, true);
+    //     ctx.fill();
+    //   });
+    // }
 
-    Cue.prototype.draw = function() {
-      if (this.visible && Math.round(this.ball.speed.magnitude()) < 4) {
-        draw(this.position.x, this.position.y , cueAngle, function(ctx) {
-          ctx.beginPath();
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = 'brown';
-          ctx.moveTo(0, 0);
-          ctx.lineTo(225, 0);
-          ctx.stroke();  
-        });
-      }
-    }
+    // function Area(width, height) {
+    //   this.position = new Vec(vars.wh, vars.hh);
+    //   this.width = width;
+    //   this.height = height;
+    //   this.bg = '#3d8229';
+    // }
 
-    var bunch = [];
-    var area = new Area(900, 450);
-    var realSizeArea = { x: vars.wh - 450, y: vars.hh - 245, width: vars.wh + 450, height: vars.hh + 245 };
-    bunch.push(
-      new Ball(
-        new Vec(200, 300), Vec.fromNumber(0).setAngle(-45),'white', area
-      )
-    );
+    // Area.prototype.draw = function() {
+    //   var self = this;
+    //   draw(this.position.x, this.position.y, 0, function(ctx) {
+    //     ctx.fillStyle = self.bg;
+    //     ctx.fillRect(-(self.width / 2), -(self.height / 2), self.width, self.height);
+    //   });
 
-    bunch.push(
-      new Ball(
-        new Vec(500, 300), Vec.fromNumber(0),'blue', area
-      )
-    );
+    //   draw(300, this.position.y, 0, function(ctx) {
+    //     ctx.beginPath();
+    //     ctx.strokeStyle = '#fff';
+    //     ctx.moveTo(0, -225);
+    //     ctx.lineTo(0, 225);
+    //     ctx.stroke();  
+    //   });
 
-    bunch.push(
-      new Ball(
-        new Vec(600, 200), Vec.fromNumber(0),'red', area
-      )
-    );
-
-    var cue = new Cue(bunch[0]);
+    // }
 
 
-    engine.update(function(ctx, t) {
-      area.draw();
-      bunch.map(function(ball) {
-        ball.colisionWithArea();
-        ball.matchColision(bunch);
-        ball.update(bunch);
-        ball.draw();
-      });
-      cue.draw();
-    });
+    // function Cue(ball) {
+    //   this.ball = ball;
+    //   this.position = this.ball.position;
+    //   this.angle = 45;
+    //   this.visible = true;
+    // }
+
+    // Cue.prototype.draw = function() {
+    //   if (this.visible && Math.round(this.ball.speed.magnitude()) < 4) {
+    //     draw(this.position.x, this.position.y , cueAngle, function(ctx) {
+    //       ctx.beginPath();
+    //       ctx.lineWidth = 4;
+    //       ctx.strokeStyle = 'brown';
+    //       ctx.moveTo(0, 0);
+    //       ctx.lineTo(225, 0);
+    //       ctx.stroke();  
+    //     });
+    //   }
+    // }
+
+    // var bunch = [];
+    // var area = new Area(900, 450);
+    // var realSizeArea = { x: vars.wh - 450, y: vars.hh - 245, width: vars.wh + 450, height: vars.hh + 245 };
+    // bunch.push(
+    //   new Ball(
+    //     new Vec(200, 300), Vec.fromNumber(0).setAngle(-45),'white', area
+    //   )
+    // );
+
+    // bunch.push(
+    //   new Ball(
+    //     new Vec(500, 300), Vec.fromNumber(0),'blue', area
+    //   )
+    // );
+
+    // bunch.push(
+    //   new Ball(
+    //     new Vec(600, 200), Vec.fromNumber(0),'red', area
+    //   )
+    // );
+
+    // var cue = new Cue(bunch[0]);
 
 
-    document.body.addEventListener('mousedown', function() {
-      if (!cueForceTimerId) {
-        cueForceTimerId = setInterval(function() {
-          cueForce += 1;
-        }, 100);
-      }
-    });
+    // engine.update(function(ctx, t) {
+    //   area.draw();
+    //   bunch.map(function(ball) {
+    //     ball.colisionWithArea();
+    //     ball.matchColision(bunch);
+    //     ball.update(bunch);
+    //     ball.draw();
+    //   });
+    //   cue.draw();
+    // });
 
-    document.body.addEventListener('mouseup', function(e) {
 
-      if (cueForceTimerId) {
-        var ball = bunch[0];
-        var mousePos = { x: e.clientX, y: e.clientY };
-        cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
+    // document.body.addEventListener('mousedown', function() {
+    //   if (!cueForceTimerId) {
+    //     cueForceTimerId = setInterval(function() {
+    //       cueForce += 1;
+    //     }, 100);
+    //   }
+    // });
 
-        clearInterval(cueForceTimerId);
-        cueForceTimerId = null;
-        ball.speed = Vec.fromNumber(cueForce);
+    // document.body.addEventListener('mouseup', function(e) {
 
-        cueForce = 0;
-      }
-    });
+    //   if (cueForceTimerId) {
+    //     var ball = bunch[0];
+    //     var mousePos = { x: e.clientX, y: e.clientY };
+    //     cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
 
-    document.body.addEventListener('mousemove', function(e) {
-      if (cueForceTimerId) {
-        var ball = bunch[0];
-        var mousePos = { x: e.clientX, y: e.clientY };
-        cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
-        ball.angle = Math.round(cueAngle + 180);
-      }
-    });
+    //     clearInterval(cueForceTimerId);
+    //     cueForceTimerId = null;
+    //     ball.speed = Vec.fromNumber(cueForce);
 
-    document.getElementById('start').addEventListener('click', function(e) {
-      var isActive = e.target.getAttribute('data-active');
+    //     cueForce = 0;
+    //   }
+    // });
 
-      if (Boolean(isActive)) {
-        engine.stop();
-        e.target.setAttribute('data-active', '');
-        e.target.innerHTML = 'start';
-      } else {
-        engine.start();
-        e.target.setAttribute('data-active', true);
-        e.target.innerHTML = 'stop';
-      }
-    })
+    // document.body.addEventListener('mousemove', function(e) {
+    //   if (cueForceTimerId) {
+    //     var ball = bunch[0];
+    //     var mousePos = { x: e.clientX, y: e.clientY };
+    //     cueAngle = ball.position.relativeAngle(mousePos) / (Math.PI / 180);
+    //     ball.angle = Math.round(cueAngle + 180);
+    //   }
+    // });
+
+    // document.getElementById('start').addEventListener('click', function(e) {
+    //   var isActive = e.target.getAttribute('data-active');
+
+    //   if (Boolean(isActive)) {
+    //     engine.stop();
+    //     e.target.setAttribute('data-active', '');
+    //     e.target.innerHTML = 'start';
+    //   } else {
+    //     engine.start();
+    //     e.target.setAttribute('data-active', true);
+    //     e.target.innerHTML = 'stop';
+    //   }
+    // })
   </script>
 </body>
 </html>

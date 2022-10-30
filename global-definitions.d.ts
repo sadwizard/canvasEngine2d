@@ -1,3 +1,3 @@
 interface Window {
-    canvas2D: object;
+    game2d: object;
 }
