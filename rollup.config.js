@@ -1,40 +1,37 @@
-import { uglify } from "rollup-plugin-uglify";
-import resolve from 'rollup-plugin-node-resolve';
-import commonJS from 'rollup-plugin-commonjs';
-import babel from 'rollup-plugin-babel';
-import process from 'process';
-
+// import process from 'process';
+import typescript from '@rollup/plugin-typescript';
 
 const plugins = [
-  resolve(),
-  commonJS({ include: 'node_modules/**' }),
-  babel({
-    exclude: 'node_modules/**',
-    presets: [
-      '@babel/preset-env'
-    ]
-  }),
-  uglify()
+  typescript({ compilerOptions: {lib: ["es5", "es6", "dom"], target: "es5"}})
 ];
 
-const targetDev = {
-  input: 'src/index.js',
-  output: {
-    file: 'bundle.js',
-    format: 'cjs',
-  },
-  plugins: plugins.slice(0, -1),
-};
+// const targetDev = {
+//   input: 'src/index.ts',
+//   output: {
+//     file: 'bundle.js',
+//     format: 'iife',
+//   },
+//   plugins: plugins,
+// };
 
-const targetProd = {
-  input: 'src/index.js',
+// const targetProd = {
+//   input: 'src/index.js',
+//   output: {
+//     file: 'bundle.js',
+//     format: 'iife'
+//   },
+//   plugins: plugins,
+// };
+
+// const target = process.env.DEV ? targetDev : targetProd;
+
+// export default target;
+
+export default {
+  input: 'src/index.ts',
   output: {
-    file: 'bundle-min.js',
-    format: 'cjs',
+    file: 'dist/bundle.js',
+    format: 'iife',
   },
   plugins: plugins,
 };
-
-
-const target = process.env.DEV ? [targetDev] : [targetDev, targetProd];
-module.exports = target;

@@ -8,20 +8,12 @@
   },
   "author": "",
   "license": "ISC",
+  "description": "",
   "devDependencies": {
-    "@babel/core": "^7.7.5",
-    "@babel/preset-env": "^7.7.6",
-    "babel-preset-env": "^1.7.0",
-    "rollup": "^1.27.12",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-uglify": "^6.0.0"
+    "@rollup/plugin-typescript": "^9.0.2",
+    "rollup": "^3.2.3",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.4"
   },
-  "dependencies": {
-    "lodash": "^4.17.15",
-    "node.packer": "^2.0.3",
-    "nodemon": "^1.18.4"
-  },
-  "description": ""
+  "type": "module"
 }
