@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>sample1</title>
+</head>
+<body>
+  <style>
+    body {
+      margin: 0;
+    }
+  </style>
+  <canvas id="canvas"></canvas>
+  <script src="../../dist/bundle.js"></script>
+  <script>
+    var canvas = new game2d.App(
+      document.getElementById('canvas'),
+      window.innerWidth,
+      window.innerHeight,
+      '#333'
+    );
+
+    var Circle = game2d.shapes.Circle;
+    var vec = game2d.Vector;
+    
+    const c = new Circle({ position: new vec(10,10) });
+    canvas.addBody(c);
+
+    canvas.run();
+
+    setTimeout(function () {
+      canvas.stop()
+    }, 3000)
+  </script>
+</body>
+</html>

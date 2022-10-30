@@ -1,10 +1,10 @@
 {
   "name": "canvas_engine",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "build": "rollup -c",
-    "serve": "DEV=true rollup -c -w"
+    "build": "PROD=1 rollup -c",
+    "start": "rollup -c -w"
   },
   "author": "",
   "license": "ISC",
@@ -12,6 +12,7 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "^9.0.2",
     "rollup": "^3.2.3",
+    "rollup-plugin-terser": "^7.0.2",
     "tslib": "^2.4.0",
     "typescript": "^4.8.4"
   },
