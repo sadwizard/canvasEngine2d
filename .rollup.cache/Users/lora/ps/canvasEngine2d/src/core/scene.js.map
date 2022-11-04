@@ -1,1 +1,1 @@
-{"version":3,"file":"scene.js","sourceRoot":"","sources":["scene.ts"],"names":[],"mappings":"","sourcesContent":[""]}
+{"version":3,"file":"scene.js","sourceRoot":"","sources":["scene.ts"],"names":[],"mappings":"AAAA;IACI;IAEA,CAAC;IACL,YAAC;AAAD,CAAC,AAJD,IAIC","sourcesContent":["export class Scene {\n    constructor() {\n        \n    }\n}"]}

@@ -19,8 +19,8 @@ export class Image extends Body {
 
     constructor(params: TImageParams) {
         super({
+            ...params,
             type: SHAPE_TYPES.IMAGE,
-            position: params.position,
         });
 
         this.width = params.width ?? 10;

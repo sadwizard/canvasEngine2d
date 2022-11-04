@@ -2,7 +2,7 @@ import Vector from '#/core/vector';
 import { TDrawer } from '#/core/render';
 import { TShapes } from './shapes/index';
 import { isNill } from '#/utils';
-import { Piece, TPieceParams } from './piece';
+import { Piece, TPieceParams, TUpdateOptions } from './piece';
 import { SHAPE_TYPES, TShapeTypes } from '#/constants';
 
 const V = Vector;
@@ -12,12 +12,17 @@ export type TBodyParams = TPieceParams & Pick<
 	'position' |
 	'static' |
 	'scale' |
-	'mass'
+	'mass' |
+	'origin' |
+	'forces' |
+	'gravity'|
+	'friction'
 >;
 
 export class Body extends Piece {
 	static: boolean;
 	position: Vector;
+	origin: Vector;
 	scale: number;
 	forces: Vector;
 	acceleration: Vector;
@@ -26,24 +31,34 @@ export class Body extends Piece {
 	angularAcceleration: number;
 	angle: number;
 	mass: number;
+	gravity: Vector | null;
+	friction: number | null;
+	updateFn?: (instance: this, dt: number) => void;
 
     constructor(params: Partial<TBodyParams>) {
-		if (isNill(params.type) || isNill(params.visible)) {
+		if (isNill(params?.type)) {
 			throw new Error('Body required params missed!');
 		}
 
-		super({ type: params.type, visible: params.visible });
+		super({
+			type: params.type,
+			visible: params?.visible,
+			zIndex: params?.zIndex,
+		});
 
 		this.static = params.static ?? false;
 		this.position = params.position ?? new V(0, 0);
+		this.origin = params?.origin ?? this.position;
 		this.scale = 1;
-		this.forces = new V(0, 1);
+		this.forces = params.forces ?? new V(0, 0);
 		this.acceleration = new V(0, 0);
 		this.velocity = new V(0, 0);
 		this.angularVelocity = 0;
 		this.angularAcceleration = 0;
 		this.angle = 0;
-		this.mass = 1;
+		this.mass = params.mass ?? 1;
+		this.gravity = params.gravity ?? null;
+		this.friction = params.friction ?? 0;
     }
 
     render(drawer: TDrawer) {
@@ -51,22 +66,28 @@ export class Body extends Piece {
     };
 
 	draw(render: TDrawer) {}
-	updateFn(body: this) {}
 
-    update(dt: number) {
+	setUpdateFn(fn: (instance: this) => void) {
+		this.updateFn = fn;
+		return this;
+	}
+
+    update(dt: number, options: TUpdateOptions) {
 		if (this.updateFn) {
-			return this.updateFn(this)
+			return this.updateFn(this, dt);
 		}
 
-		if (this.static) return
+		if (this.static) return;
 
+		const G = this.gravity ?? options.globalGravity ?? new Vector(0, 0);
 		const d = dt * 0.01;
 		const prevPosition = this.position.clone();
 		// console.log(new V(0, 1).toAngle(this.angle))
 		// this.forces.add(new V(0, 1)) // apply gravity
 
 	// console.log(this.forces.clone().divisionScalar(this.mass))
-		this.acceleration.add(this.forces.divScalar(this.mass));
+		const F = this.forces.add(G);
+		this.acceleration.add(F.divScalar(this.mass));
 		this.velocity.add(this.acceleration);
 
 		this.position.add(this.velocity.clone().mulScalar(d));
@@ -77,7 +98,7 @@ export class Body extends Piece {
 		// calc speed
 		// this.speed = this.position.clone().sub(prevPosition).divisionScalar(d);
 		// console.log(this.speed.magnitude())
-		this.acceleration.mulScalar(0)
+		this.acceleration.mulScalar(0);
 		// this.velocity.multiplyScalar(0)
     };
 

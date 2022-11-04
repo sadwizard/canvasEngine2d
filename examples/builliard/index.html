@@ -20,9 +20,11 @@
   <canvas id="canvas"></canvas>
   <script src="../../dist/bundle.js"></script>
   <script>
-    var app = new game2d.App(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333');
+	var Vec = game2d.Vector;
+    var app = new game2d.App(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333', {
+		globalGravity: new Vec(0, 0),
+	});
     var screen = app.screen;
-    var Vec = game2d.Vector;
     var u = game2d.utils;
     var shapes = game2d.shapes;
     var G = 6.67;
@@ -34,14 +36,53 @@
     var cueAngle = 0
     var cueForceTimerId = null;
 
-    var table = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 400 , fillStyle: 'green'});
-    var borderTop = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 10 , fillStyle: '#5a2c2c'});
-    var borderLeft = new shapes.Rect({ position: new Vec(screen.w / 2, screen.h / 2), width: 800 , height: 400 , fillStyle: '#5a2c2c'});
+    var tableSize = { w: 760, h: 400 };
+    var colorBorders = '#3c1b1b';
 
 
-    app.addBody(table);
 
-    app.print();
+    var plate = new shapes.Rect({ static: true, width: tableSize.w , height: tableSize.h , fillStyle: 'green' });
+
+	var borderSize = 30;
+    var borders = new game2d.Group({ name: 'borders', static: true })
+		.add(
+			new shapes.Rect({ position: new Vec(0, -215), width: tableSize.w , height: borderSize , fillStyle: colorBorders }),
+			new shapes.Rect({ position: new Vec(0, 215), width: tableSize.w , height: borderSize , fillStyle: colorBorders }),
+			new shapes.Rect({ position: new Vec(390, 0), width: borderSize , height: tableSize.h + borderSize + 30 , fillStyle: colorBorders }),
+			new shapes.Rect({ position: new Vec(-390, 0), width: borderSize , height: tableSize.h + borderSize + 30 , fillStyle: colorBorders }),
+		);
+    var markup = new game2d.Group({ name: 'markup', static: true })
+		.add(
+			new shapes.Rect({ position: new Vec(-220, 0), width: 1 , height: 400 , fillStyle: '#fff' })
+		);
+
+	var holes = new game2d.Group({ name: 'holes', static: true })
+		.add(
+			new shapes.Circle({ position: new Vec(-374, -195), radius: 15, fillStyle: '#000' }),
+			new shapes.Circle({ position: new Vec(374, 195), radius: 15, fillStyle: '#000' }),
+			new shapes.Circle({ position: new Vec(0, -202), radius: 15, fillStyle: '#000' }),
+			new shapes.Circle({ position: new Vec(0, 202), radius: 15, fillStyle: '#000' }),
+			new shapes.Circle({ position: new Vec(-374, 195), radius: 15, fillStyle: '#000' }),
+			new shapes.Circle({ position: new Vec(374, -195), radius: 15, fillStyle: '#000' }),
+		);
+
+	var balls = new game2d.Group({ name: 'balls' })
+		.add(
+			new shapes
+				.Circle({ forces: new Vec(0, 0.1), position: new Vec(100, 0), radius: 13, fillStyle: 'red' })
+				.setUpdateFn(function(ball, dt){
+
+				})
+		);
+
+	var table = new game2d.Group({ name: 'table', position: new Vec(screen.w / 2, screen.h / 2) })
+		.add(plate, markup, borders, holes, balls);
+
+    app.addBody(table).run();
+
+	setTimeout(function() {
+		app.stop();
+	}, 3000);
     // function Ball(position, vel, color, area) {
     //   this.id = String(u.random(100, 900));
     //   this.position = position;

@@ -1,6 +1,5 @@
-import { __extends } from "tslib";
+import { __assign, __extends } from "tslib";
 import Vector from '#/core/vector';
-import { isNill } from '#/utils';
 import { Body } from '../body';
 import { SHAPE_TYPES } from '#/constants';
 var Rectangle = /** @class */ (function (_super) {
@@ -8,18 +7,11 @@ var Rectangle = /** @class */ (function (_super) {
     function Rectangle(params) {
         var _this = this;
         var _a, _b, _c, _d, _e;
-        if (isNill(params.type) || isNill(params.visible) || isNill(params.position)) {
-            throw new Error('Rect required params missed!');
-        }
-        _this = _super.call(this, {
-            type: SHAPE_TYPES.RECTANGLE,
-            position: params.position,
-            visible: params.visible,
-        }) || this;
+        _this = _super.call(this, __assign(__assign({}, params), { type: SHAPE_TYPES.RECTANGLE })) || this;
         _this.width = (_a = params.width) !== null && _a !== void 0 ? _a : 10;
         _this.height = (_b = params.height) !== null && _b !== void 0 ? _b : 10;
         _this.fillStyle = (_c = params.fillStyle) !== null && _c !== void 0 ? _c : _this.id;
-        _this.strokeStyle = (_d = params.strokeStyle) !== null && _d !== void 0 ? _d : '#ddd';
+        _this.strokeStyle = (_d = params.strokeStyle) !== null && _d !== void 0 ? _d : undefined;
         _this.lineWidth = (_e = params.lineWidth) !== null && _e !== void 0 ? _e : 0;
         return _this;
     }
@@ -27,7 +19,9 @@ var Rectangle = /** @class */ (function (_super) {
         var _a = this, position = _a.position, width = _a.width, height = _a.height, angle = _a.angle, fillStyle = _a.fillStyle, strokeStyle = _a.strokeStyle, lineWidth = _a.lineWidth;
         drawer(position.x, position.y, angle, function (ctx) {
             ctx.fillStyle = fillStyle;
-            ctx.strokeStyle = strokeStyle;
+            if (strokeStyle !== undefined) {
+                ctx.strokeStyle = strokeStyle;
+            }
             ctx.lineWidth = lineWidth;
             if (lineWidth > 0) {
                 ctx.rect(-(width / 2), -(height / 2), width, height);

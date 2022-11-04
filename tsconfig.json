@@ -9,6 +9,7 @@
             "#/*": ["src/*"]
         },
         "skipLibCheck": true,
-        "removeComments": false
-    }
+        "removeComments": false,
+    },
+    "exclude": ["*.js", "node_modules"]
 }

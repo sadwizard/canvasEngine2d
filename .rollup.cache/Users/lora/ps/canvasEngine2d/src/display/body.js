@@ -7,21 +7,28 @@ var Body = /** @class */ (function (_super) {
     __extends(Body, _super);
     function Body(params) {
         var _this = this;
-        var _a, _b;
-        if (isNill(params.type) || isNill(params.visible)) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        if (isNill(params === null || params === void 0 ? void 0 : params.type)) {
             throw new Error('Body required params missed!');
         }
-        _this = _super.call(this, { type: params.type, visible: params.visible }) || this;
+        _this = _super.call(this, {
+            type: params.type,
+            visible: params === null || params === void 0 ? void 0 : params.visible,
+            zIndex: params === null || params === void 0 ? void 0 : params.zIndex,
+        }) || this;
         _this.static = (_a = params.static) !== null && _a !== void 0 ? _a : false;
         _this.position = (_b = params.position) !== null && _b !== void 0 ? _b : new V(0, 0);
+        _this.origin = (_c = params === null || params === void 0 ? void 0 : params.origin) !== null && _c !== void 0 ? _c : _this.position;
         _this.scale = 1;
-        _this.forces = new V(0, 1);
+        _this.forces = (_d = params.forces) !== null && _d !== void 0 ? _d : new V(0, 0);
         _this.acceleration = new V(0, 0);
         _this.velocity = new V(0, 0);
         _this.angularVelocity = 0;
         _this.angularAcceleration = 0;
         _this.angle = 0;
-        _this.mass = 1;
+        _this.mass = (_e = params.mass) !== null && _e !== void 0 ? _e : 1;
+        _this.gravity = (_f = params.gravity) !== null && _f !== void 0 ? _f : null;
+        _this.friction = (_g = params.friction) !== null && _g !== void 0 ? _g : 0;
         return _this;
     }
     Body.prototype.render = function (drawer) {
@@ -29,19 +36,25 @@ var Body = /** @class */ (function (_super) {
     };
     ;
     Body.prototype.draw = function (render) { };
-    Body.prototype.updateFn = function (body) { };
-    Body.prototype.update = function (dt) {
+    Body.prototype.setUpdateFn = function (fn) {
+        this.updateFn = fn;
+        return this;
+    };
+    Body.prototype.update = function (dt, options) {
+        var _a, _b;
         if (this.updateFn) {
-            return this.updateFn(this);
+            return this.updateFn(this, dt);
         }
         if (this.static)
             return;
+        var G = (_b = (_a = this.gravity) !== null && _a !== void 0 ? _a : options.globalGravity) !== null && _b !== void 0 ? _b : new Vector(0, 0);
         var d = dt * 0.01;
         var prevPosition = this.position.clone();
         // console.log(new V(0, 1).toAngle(this.angle))
         // this.forces.add(new V(0, 1)) // apply gravity
         // console.log(this.forces.clone().divisionScalar(this.mass))
-        this.acceleration.add(this.forces.divScalar(this.mass));
+        var F = this.forces.add(G);
+        this.acceleration.add(F.divScalar(this.mass));
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity.clone().mulScalar(d));
         this.angularVelocity = this.angularVelocity * d;

@@ -17,24 +17,19 @@ export class Rectangle extends Body {
 	width: number;
 	height: number;
 	fillStyle: string;
-	strokeStyle: string;
+	strokeStyle?: string;
 	lineWidth: number;
 
     constructor(params: TRectangleParams) {
-		if (isNill(params.type) || isNill(params.visible) || isNill(params.position)) {
-			throw new Error('Rect required params missed!');
-		}
-
         super({
+			...params,
 			type: SHAPE_TYPES.RECTANGLE,
-			position: params.position,
-			visible: params.visible,
 		});
 
 		this.width = params.width ?? 10;
 		this.height = params.height ?? 10;
 		this.fillStyle = params.fillStyle ?? this.id;
-		this.strokeStyle = params.strokeStyle ?? '#ddd';
+		this.strokeStyle = params.strokeStyle ?? undefined;
 		this.lineWidth = params.lineWidth ?? 0;
     }
 
@@ -43,7 +38,11 @@ export class Rectangle extends Body {
 
         drawer(position.x, position.y, angle, (ctx) => {
             ctx.fillStyle = fillStyle;
-            ctx.strokeStyle = strokeStyle;
+
+			if (strokeStyle !== undefined) {
+                ctx.strokeStyle = strokeStyle;
+            }
+
             ctx.lineWidth = lineWidth;
 
             if (lineWidth > 0) {

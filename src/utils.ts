@@ -26,3 +26,5 @@ export function randomColor(): string {
 
 export const isNill = <T extends unknown>(arg: T | null | undefined): arg is undefined | null =>
     arg === undefined || arg === null;
+
+export const zIndexComporator = (a: any, b: any) => a > b ? -1 : 1;

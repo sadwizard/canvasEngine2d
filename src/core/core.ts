@@ -2,9 +2,14 @@ import { Body } from '#/display/body';
 import Ticker from './ticker';
 import Render from './render';
 import Collision from '#/collisions/collision';
-import type { TShapes } from '#/display/shapes/index';
+import { TShapes } from '#/display/shapes/index';
 import { Piece } from '#/display/piece';
-import { isNill } from '#/utils';
+import { isNill, zIndexComporator } from '#/utils';
+import Vector from './vector';
+
+type TSettings = {
+    globalGravity?: Vector;
+}
 
 export default class GameEngine {
     canvas: HTMLCanvasElement;
@@ -15,18 +20,21 @@ export default class GameEngine {
     tickerRender: Ticker;
     renderer: Render;
     collisions: Collision;
+    
+    globalGravity: Vector;
 
     constructor(
         node: HTMLCanvasElement,
         width: number,
         height: number,
         backgroundColor: string,
+        settings?: TSettings,
     ) {
         if (isNill(node) || isNill(width) || isNill(height)) {
             throw 'Default param was missed!';
         }
 
-        this.ctx = this.getContext2d(node);
+        this.ctx = GameEngine.getContext2d(node);
 
         const FPS = 1000 / 60;
 
@@ -47,6 +55,8 @@ export default class GameEngine {
         this.renderer = new Render(this.ctx);
         this.collisions = new Collision();
 
+        this.globalGravity = settings?.globalGravity ?? new Vector(0, 1);
+
         return this;
     }
 
@@ -54,13 +64,15 @@ export default class GameEngine {
         args.forEach((item) => {
             if (item instanceof Piece) {
                 this.objects.push(item);
+                this.objects.sort(zIndexComporator);
             }
         });
+
+        return this;
     }
 
     removeBody(id: string) {
-        const index: number = this.objects.findIndex((item) => item.id === id);
-        return delete this.objects[index];
+        this.objects = this.objects.filter((item) => item.id !== id);
     }
 
     run() {
@@ -74,19 +86,27 @@ export default class GameEngine {
         });
 
         this.tickerUpdate.setUpdateFunc((dt: number) => {
-            this.collisions.update(this.objects);
+            // this.collisions.update(this.objects);
+            const options = {
+                globalGravity: this.globalGravity,
+            };
+
             this.objects.forEach((item) => {
-                item.update(dt);
+                item.update(dt, options);
             });
         });
 
         this.tickerRender.start();
         this.tickerUpdate.start();
+
+        return this;
     }
 
     stop() {
-      this.tickerRender.stop();
-      this.tickerUpdate.stop();
+        this.tickerRender.stop();
+        this.tickerUpdate.stop();
+
+        return this;
     }
 
     print() {
@@ -96,9 +116,11 @@ export default class GameEngine {
         this.objects.forEach((item) => {
             item.render(drawer);
         });
+
+        return this;
     }
 
-    getContext2d(node: HTMLCanvasElement): CanvasRenderingContext2D | never {
+    static getContext2d(node: HTMLCanvasElement): CanvasRenderingContext2D | never {
         try {
             const ctx = node.getContext('2d');
 

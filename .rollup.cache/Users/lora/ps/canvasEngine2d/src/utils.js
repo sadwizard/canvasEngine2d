@@ -23,4 +23,5 @@ export function randomColor() {
 export var isNill = function (arg) {
     return arg === undefined || arg === null;
 };
+export var zIndexComporator = function (a, b) { return a > b ? -1 : 1; };
 //# sourceMappingURL=utils.js.map

@@ -1,4 +1,4 @@
-import { __extends } from "tslib";
+import { __assign, __extends } from "tslib";
 import { SHAPE_TYPES } from '#/constants';
 import { Body } from '../body';
 var Image = /** @class */ (function (_super) {
@@ -6,10 +6,7 @@ var Image = /** @class */ (function (_super) {
     function Image(params) {
         var _this = this;
         var _a, _b;
-        _this = _super.call(this, {
-            type: SHAPE_TYPES.IMAGE,
-            position: params.position,
-        }) || this;
+        _this = _super.call(this, __assign(__assign({}, params), { type: SHAPE_TYPES.IMAGE })) || this;
         _this.width = (_a = params.width) !== null && _a !== void 0 ? _a : 10;
         _this.height = (_b = params.height) !== null && _b !== void 0 ? _b : 10;
         _this.src = params.src;

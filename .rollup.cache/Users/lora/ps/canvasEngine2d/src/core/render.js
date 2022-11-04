@@ -6,7 +6,7 @@ var Render = /** @class */ (function () {
         this.ctx.save();
         this.ctx.translate(x, y);
         this.ctx.rotate(deg ? deg * (Math.PI / 180) : 0);
-        if (drawFunction) {
+        if (drawFunction !== undefined) {
             drawFunction(this.ctx);
         }
         this.ctx.restore();

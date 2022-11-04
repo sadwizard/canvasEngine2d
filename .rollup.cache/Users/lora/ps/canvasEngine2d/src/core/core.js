@@ -2,13 +2,15 @@ import Ticker from './ticker';
 import Render from './render';
 import Collision from '#/collisions/collision';
 import { Piece } from '#/display/piece';
-import { isNill } from '#/utils';
+import { isNill, zIndexComporator } from '#/utils';
+import Vector from './vector';
 var GameEngine = /** @class */ (function () {
-    function GameEngine(node, width, height, backgroundColor) {
+    function GameEngine(node, width, height, backgroundColor, settings) {
+        var _a;
         if (isNill(node) || isNill(width) || isNill(height)) {
             throw 'Default param was missed!';
         }
-        this.ctx = this.getContext2d(node);
+        this.ctx = GameEngine.getContext2d(node);
         var FPS = 1000 / 60;
         this.canvas = node;
         this.canvas.width = width;
@@ -26,6 +28,7 @@ var GameEngine = /** @class */ (function () {
         this.tickerRender = new Ticker(this.ctx, { tieRender: false });
         this.renderer = new Render(this.ctx);
         this.collisions = new Collision();
+        this.globalGravity = (_a = settings === null || settings === void 0 ? void 0 : settings.globalGravity) !== null && _a !== void 0 ? _a : new Vector(0, 1);
         return this;
     }
     GameEngine.prototype.addBody = function () {
@@ -37,12 +40,13 @@ var GameEngine = /** @class */ (function () {
         args.forEach(function (item) {
             if (item instanceof Piece) {
                 _this.objects.push(item);
+                _this.objects.sort(zIndexComporator);
             }
         });
+        return this;
     };
     GameEngine.prototype.removeBody = function (id) {
-        var index = this.objects.findIndex(function (item) { return item.id === id; });
-        return delete this.objects[index];
+        this.objects = this.objects.filter(function (item) { return item.id !== id; });
     };
     GameEngine.prototype.run = function () {
         var _this = this;
@@ -54,17 +58,22 @@ var GameEngine = /** @class */ (function () {
             });
         });
         this.tickerUpdate.setUpdateFunc(function (dt) {
-            _this.collisions.update(_this.objects);
+            // this.collisions.update(this.objects);
+            var options = {
+                globalGravity: _this.globalGravity,
+            };
             _this.objects.forEach(function (item) {
-                item.update(dt);
+                item.update(dt, options);
             });
         });
         this.tickerRender.start();
         this.tickerUpdate.start();
+        return this;
     };
     GameEngine.prototype.stop = function () {
         this.tickerRender.stop();
         this.tickerUpdate.stop();
+        return this;
     };
     GameEngine.prototype.print = function () {
         var drawer = this.renderer.draw.bind(this);
@@ -72,8 +81,9 @@ var GameEngine = /** @class */ (function () {
         this.objects.forEach(function (item) {
             item.render(drawer);
         });
+        return this;
     };
-    GameEngine.prototype.getContext2d = function (node) {
+    GameEngine.getContext2d = function (node) {
         try {
             var ctx = node.getContext('2d');
             if (!isNill(ctx)) {
