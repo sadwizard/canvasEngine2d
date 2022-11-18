@@ -23,7 +23,7 @@
 	var Vec = game2d.Vector;
     var app = new game2d.App(document.getElementById('canvas'), window.innerWidth, window.innerHeight, '#333', {
 		globalGravity: new Vec(0, 0),
-	});
+    });
     var screen = app.screen;
     var u = game2d.utils;
     var shapes = game2d.shapes;
@@ -70,9 +70,9 @@
 		.add(
 			new shapes
 				.Circle({ forces: new Vec(0, 0.1), position: new Vec(100, 0), radius: 13, fillStyle: 'red' })
-				.setUpdateFn(function(ball, dt){
+				// .setUpdateFn(function(ball, dt){
 
-				})
+				// })
 		);
 
 	var table = new game2d.Group({ name: 'table', position: new Vec(screen.w / 2, screen.h / 2) })

@@ -1,7 +1,7 @@
 {
   "name": "canvas_engine",
   "version": "0.0.1",
-  "main": "index.js",
+  "main": "dist/bundle.js",
   "scripts": {
     "build": "PROD=1 rollup -c",
     "start": "rollup -c -w"

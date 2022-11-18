@@ -13,3 +13,5 @@ jest
 npm-debug.log
 .idea
 /dist
+.rollup.cache
+.yarn
